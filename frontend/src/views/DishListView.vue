@@ -1,22 +1,20 @@
 <script setup lang="ts">
 /** 菜谱浏览（§10）：分类 Tab + 难度/口味筛选 + 搜索 + 分页卡片。 */
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { apiDishList, type DishSummary } from '@/api/dishes'
 import DishCard from '@/components/DishCard.vue'
 
-const categories = [
-  { label: '全部', value: '' },
-  { label: '素菜', value: 'vegetable_dish' },
-  { label: '荤菜', value: 'meat_dish' },
-  { label: '水产', value: 'aquatic' },
-  { label: '早餐', value: 'breakfast' },
-  { label: '主食', value: 'staple' },
-  { label: '半成品', value: 'semi-finished' },
-  { label: '汤粥', value: 'soup' },
-  { label: '饮料', value: 'drink' },
-  { label: '酱料', value: 'condiment' },
-  { label: '甜品', value: 'dessert' },
-]
+const { t } = useI18n()
+
+// value 是传给后端的实际分类值（不随语言变化），label 随语言切换（走 i18n）
+const categoryValues = ['', 'vegetable_dish', 'meat_dish', 'aquatic', 'breakfast', 'staple', 'semi-finished', 'soup', 'drink', 'condiment', 'dessert']
+const categories = computed(() =>
+  categoryValues.map((value) => ({
+    value,
+    label: t(`dish.categories.${value || 'all'}`),
+  })),
+)
 
 const category = ref('')
 const keyword = ref('')
@@ -63,7 +61,7 @@ onMounted(() => void load())
       <el-radio-group v-model="category" class="cats">
         <el-radio-button v-for="c in categories" :key="c.value" :value="c.value">{{ c.label }}</el-radio-button>
       </el-radio-group>
-      <el-input v-model="keyword" placeholder="搜索菜名 / 食材" clearable style="width: 220px" />
+      <el-input v-model="keyword" :placeholder="t('dish.searchPlaceholder')" clearable style="width: 220px" />
     </div>
 
     <div v-loading="loading" class="grid">
@@ -78,7 +76,7 @@ onMounted(() => void load())
       layout="prev, pager, next"
       class="pager"
     />
-    <el-empty v-if="!loading && dishes.length === 0" description="没有符合条件的菜谱" />
+    <el-empty v-if="!loading && dishes.length === 0" :description="t('dish.emptyList')" />
   </div>
 </template>
 
