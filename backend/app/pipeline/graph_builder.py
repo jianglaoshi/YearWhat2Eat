@@ -101,14 +101,11 @@ def write_graph(
     - reset=False：纯 MERGE 增量（不产生重复，但不会清理陈旧节点）。
     """
     if reset:
-        client.run(
-            """
-            MATCH (n)
-            WHERE n:Dish OR n:Ingredient OR n:Tool OR n:Step OR n:Category
-               OR n:FlavorTag OR n:Cuisine OR n:Technique OR n:MealType
-            DETACH DELETE n
-            """
-        )
+        for label in (
+            "Dish", "Ingredient", "Tool", "Step", "Category",
+            "FlavorTag", "Cuisine", "Technique", "MealType",
+        ):
+            client.run(f"MATCH (n:{label}) DETACH DELETE n")
     _ensure_schema(client)
 
     stats = {"dishes": 0, "ingredients": 0, "tools": 0, "steps": 0, "relations": 0}
