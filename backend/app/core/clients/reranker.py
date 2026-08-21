@@ -2,6 +2,9 @@
 
 - BAAI/bge-reranker-v2-m3，device=auto（CUDA/CPU，§16 决策 1 OK）
 - 懒加载；rerank(query, documents) -> 每条打分（sigmoid 概率）
+- NullRerankerClient（RERANKER_PROVIDER=none）：不加载任何模型，直接复用调用方已按 RRF
+  排好的候选顺序打分（线性衰减，保持相对排序），用于内存极受限环境（如免费云主机 512MB
+  装不下 2.3GB 本地 reranker 模型），代价是跳过真正的交叉编码精排。
 """
 from __future__ import annotations
 
@@ -53,5 +56,20 @@ class LocalRerankerClient:
         return [float(s) for s in scores]
 
 
+class NullRerankerClient:
+    """轻量占位实现（RERANKER_PROVIDER=none）：不导入 torch/sentence-transformers，
+    不加载任何模型。调用方传入的 documents 已经是按 RRF 分数降序排好的，这里按位置
+    做线性衰减打分，保持原有相对顺序不变，只是跳过真正的交叉编码精排步骤。
+    """
+
+    def rerank(self, query: str, documents: list[str]) -> list[float]:
+        n = len(documents)
+        if n == 0:
+            return []
+        return [1.0 - i / n for i in range(n)]
+
+
 def build_reranker_client(settings: Settings) -> RerankerClient:
+    if settings.reranker_provider == "none":
+        return NullRerankerClient()
     return LocalRerankerClient(settings)
