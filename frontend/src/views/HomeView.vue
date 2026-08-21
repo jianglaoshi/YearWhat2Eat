@@ -3,36 +3,51 @@
  * 推荐首页：Hero 大标题 + 场景快捷入口 + 人性化标签选项（人数/餐次/口味/时长）
  * + 规则推荐结果（§10：无 LLM、毫秒级——千人千面规则打分 + 荤素规划，菜单卡片 + 参考菜谱）
  * + 页面加载默认自动推荐一次（无"大家喜欢"热门流）。
+ *
+ * i18n 说明：mealTime / flavors 等发给后端的值必须保持中文原值不变（后端按中文匹配），
+ * 页面上只对"显示文案"做多语言映射（home.mealLabel / home.flavorLabel，key=中文值，value=显示文案）。
  */
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Refresh, MagicStick } from '@element-plus/icons-vue'
 import { apiRuleRecommend, type MenuPlan, type SourceRef } from '@/api/chat'
 import MenuCard from '@/components/MenuCard.vue'
 import SourceCard from '@/components/SourceCard.vue'
 
+const { t, tm } = useI18n()
 const appName = import.meta.env.VITE_APP_NAME || '是啊吃什么'
 
-// ── 场景快捷入口（4 个，需求 4） ──
-const scenes = [
-  { label: '深夜食堂', emoji: '🌙', build: () => ({ people: 1, mealTime: '夜宵', maxTime: 20, flavors: [] }) },
-  { label: '减脂餐', emoji: '🥗', build: () => ({ people: 1, mealTime: '晚餐', maxTime: 30, flavors: ['清淡'] }) },
-  { label: '招待朋友', emoji: '🥂', build: () => ({ people: 4, mealTime: '晚餐', maxTime: 120, flavors: [] }) },
-  { label: '周末大餐', emoji: '🍲', build: () => ({ people: 3, mealTime: '晚餐', maxTime: 90, flavors: ['辣'] }) },
-]
+// ── 场景快捷入口（4 个，需求 4）：build() 里的中文值直接喂给后端，不受语言切换影响 ──
+const scenes = computed(() => [
+  { label: t('home.scenes.lateNight'), emoji: '🌙', build: () => ({ people: 1, mealTime: '夜宵', maxTime: 20, flavors: [] as string[] }) },
+  { label: t('home.scenes.diet'), emoji: '🥗', build: () => ({ people: 1, mealTime: '晚餐', maxTime: 30, flavors: ['清淡'] }) },
+  { label: t('home.scenes.guests'), emoji: '🥂', build: () => ({ people: 4, mealTime: '晚餐', maxTime: 120, flavors: [] as string[] }) },
+  { label: t('home.scenes.weekend'), emoji: '🍲', build: () => ({ people: 3, mealTime: '晚餐', maxTime: 90, flavors: ['辣'] }) },
+])
 
-// ── 标签式选项（人性化） ──
+// ── 标签式选项（人性化）：内部值保持中文，仅显示文案走 i18n ──
 const people = ref(2)
 const mealTime = ref('晚餐')
 const flavors = ref<string[]>([])
 const maxTime = ref(30)
 const mealOptions = ['早餐', '午餐', '晚餐', '夜宵']
 const flavorOptions = ['辣', '清淡', '甜', '酸', '咸鲜']
-const timeOptions = [
-  { label: '15 分钟内', value: 15 },
-  { label: '30 分钟内', value: 30 },
-  { label: '1 小时内', value: 60 },
-  { label: '不赶时间', value: 0 },
-]
+const timeOptions = computed(() => [
+  { label: t('home.durations.min15'), value: 15 },
+  { label: t('home.durations.min30'), value: 30 },
+  { label: t('home.durations.min60'), value: 60 },
+  { label: t('home.durations.noRush'), value: 0 },
+])
+
+function mealLabel(v: string): string {
+  const map = tm('home.mealLabel') as Record<string, string>
+  return map[v] ?? v
+}
+
+function flavorLabel(v: string): string {
+  const map = tm('home.flavorLabel') as Record<string, string>
+  return map[v] ?? v
+}
 
 const loading = ref(false)
 const plan = ref<MenuPlan | null>(null)
@@ -98,8 +113,8 @@ onMounted(() => void recommend())
   <div class="home-view">
     <!-- Hero 区（需求 4：更美观、更人性化） -->
     <section class="hero">
-      <h1 class="hero-title">今天吃什么？</h1>
-      <p class="hero-sub">让 {{ appName }} 根据你的口味与食材，配一桌好菜</p>
+      <h1 class="hero-title">{{ t('home.heroTitle') }}</h1>
+      <p class="hero-sub">{{ t('home.heroSub', { name: appName }) }}</p>
       <div class="scene-row">
         <button
           v-for="s in scenes"
@@ -116,20 +131,20 @@ onMounted(() => void recommend())
     <!-- 人性化选项 -->
     <section class="ask-card app-card">
       <div class="opt-row">
-        <span class="opt-label">人数</span>
+        <span class="opt-label">{{ t('home.peopleLabel') }}</span>
         <el-radio-group v-model="people">
-          <el-radio-button v-for="n in [1, 2, 3, 4]" :key="n" :value="n">{{ n }} 人</el-radio-button>
-          <el-radio-button :value="5">5+</el-radio-button>
+          <el-radio-button v-for="n in [1, 2, 3, 4]" :key="n" :value="n">{{ t('home.peopleUnit', { n }) }}</el-radio-button>
+          <el-radio-button :value="5">{{ t('home.peopleMore') }}</el-radio-button>
         </el-radio-group>
       </div>
       <div class="opt-row">
-        <span class="opt-label">餐次</span>
+        <span class="opt-label">{{ t('home.mealTimeLabel') }}</span>
         <el-radio-group v-model="mealTime">
-          <el-radio-button v-for="t in mealOptions" :key="t" :value="t">{{ t }}</el-radio-button>
+          <el-radio-button v-for="m in mealOptions" :key="m" :value="m">{{ mealLabel(m) }}</el-radio-button>
         </el-radio-group>
       </div>
       <div class="opt-row">
-        <span class="opt-label">口味</span>
+        <span class="opt-label">{{ t('home.flavorTitle') }}</span>
         <el-check-tag
           v-for="f in flavorOptions"
           :key="f"
@@ -137,21 +152,21 @@ onMounted(() => void recommend())
           class="flavor-chip"
           @change="(checked: boolean) => toggleFlavor(f, checked)"
         >
-          {{ f }}
+          {{ flavorLabel(f) }}
         </el-check-tag>
       </div>
       <div class="opt-row">
-        <span class="opt-label">时长</span>
+        <span class="opt-label">{{ t('home.durationLabel') }}</span>
         <el-radio-group v-model="maxTime">
-          <el-radio-button v-for="t in timeOptions" :key="t.value" :value="t.value">{{ t.label }}</el-radio-button>
+          <el-radio-button v-for="opt in timeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</el-radio-button>
         </el-radio-group>
       </div>
       <div class="opt-actions">
         <el-button type="primary" size="large" :loading="loading" @click="recommend">
-          <el-icon><MagicStick /></el-icon>推荐菜单
+          <el-icon><MagicStick /></el-icon>{{ t('home.recommendBtn') }}
         </el-button>
         <el-button size="large" :disabled="!plan" @click="refresh">
-          <el-icon><Refresh /></el-icon>换一批
+          <el-icon><Refresh /></el-icon>{{ t('home.refreshBtn') }}
         </el-button>
       </div>
     </section>
