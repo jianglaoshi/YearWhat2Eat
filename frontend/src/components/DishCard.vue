@@ -1,29 +1,32 @@
 <script setup lang="ts">
 /** 菜谱卡片（§10 组件）：名称/分类/难度星标/时长/口味标签，点击进详情。 */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Clock, StarFilled } from '@element-plus/icons-vue'
 import type { DishSummary } from '@/api/dishes'
 import FlavorTags from './FlavorTags.vue'
 
 const props = defineProps<{ dish: DishSummary }>()
+const { t } = useI18n()
 
 const difficulty = computed(() => props.dish.difficulty ?? 0)
 const flavorList = computed(() => props.dish.flavors ?? [])
+const categoryLabel = computed(() => t(`dish.categories.${props.dish.category}`))
 </script>
 
 <template>
   <router-link :to="{ name: 'dish-detail', params: { id: dish.dish_id } }" class="dish-card">
     <div class="card-head">
       <span class="name">{{ dish.name }}</span>
-      <span class="category">{{ dish.category }}</span>
+      <span class="category">{{ categoryLabel }}</span>
     </div>
     <div class="card-meta">
       <span class="diff">
         <el-icon><StarFilled v-for="i in difficulty" :key="i" /></el-icon>
-        <span v-if="difficulty === 0" class="diff-empty">难度未知</span>
+        <span v-if="difficulty === 0" class="diff-empty">{{ t('dish.difficultyUnknown') }}</span>
       </span>
       <span v-if="dish.time_est" class="time">
-        <el-icon><Clock /></el-icon>{{ dish.time_est }} 分钟
+        <el-icon><Clock /></el-icon>{{ t('dish.minutes', { n: dish.time_est }) }}
       </span>
     </div>
     <FlavorTags :flavors="flavorList" :limit="3" />
