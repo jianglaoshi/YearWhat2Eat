@@ -268,4 +268,37 @@ onMounted(() => void recommend())
   color: var(--text-secondary);
   line-height: 1.7;
 }
+/* ── 移动端适配（<=640px）─────────────────────────────── */
+@media (max-width: 640px) {
+  .hero {
+    padding: 16px 8px 4px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-sub {
+    font-size: 13px;
+    margin: 6px 0 14px;
+  }
+
+  .scene-chip {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .opt-row {
+    gap: 8px;
+  }
+
+  .opt-actions {
+    flex-direction: column;
+  }
+
+  .opt-actions .el-button {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+}
 </style>
