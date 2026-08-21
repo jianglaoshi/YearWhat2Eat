@@ -106,4 +106,20 @@ onMounted(() => void load())
   margin-top: 16px;
   justify-content: center;
 }
+/* ── 移动端适配（<=640px）─────────────────────────────── */
+@media (max-width: 640px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar :deep(.el-input) {
+    width: 100% !important;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+}
 </style>
