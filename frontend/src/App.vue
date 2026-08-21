@@ -22,8 +22,8 @@ onMounted(() => {
 
 const navItems = [
   { name: 'home', label: '推荐' },
-  { name: 'chat', label: '聊天' },
   { name: 'dishes', label: '菜谱' },
+  // 聊天入口已暂时屏蔽（免费部署资源不足以支撑完整对话链路，见部署文档）
 ]
 
 const displayName = computed(() => {
