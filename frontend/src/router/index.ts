@@ -10,7 +10,6 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'home', component: () => import('@/views/HomeView.vue') },
-    { path: '/chat', name: 'chat', component: () => import('@/views/ChatView.vue') },
     { path: '/dishes', name: 'dishes', component: () => import('@/views/DishListView.vue') },
     { path: '/dishes/:id', name: 'dish-detail', component: () => import('@/views/DishDetailView.vue') },
     { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
